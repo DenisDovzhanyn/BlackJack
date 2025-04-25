@@ -10,6 +10,11 @@ export const findByUsername = async (username: string) => {
     return await userCol.findOne({username: username})
 }
 
+export const findBySession = async (sessionToken: string) => {
+    const userCol: mongoDb.Collection = getDb('blackjack').collection('users')
+    
+    return await userCol.findOne( {authorization: { sessionToken: sessionToken }} )
+}
 export const insertUser = async (username: string, password: string, cookie: string) => {
     // generate a salt which will be used with the base password to create
     // a hash

@@ -5,6 +5,8 @@ import { connectDb, getDb } from './mongodb';
 
 import cookieParser from 'cookie-parser'
 import authRoutes from './routes/authRoutes';
+import { findBySession } from './db/user';
+import { User } from './models/user';
 
 async function main () {
     // load our secrets
@@ -35,6 +37,32 @@ async function main () {
     // make the request go through a sub-app or 'route' which has paths related
     // to authentication, such as logging in or registering
     app.use('/auth', authRoutes)
+
+
+    // if something requires auth, it must be placed after this middle ware, to ensure
+    // that the user has a session token and is logged in. If it is placed before this,
+    // then the user's validity will not be checked
+    app.use( async (req: Request, res: Response, next: express.NextFunction) => {
+        const { sessionToken } = req.cookies
+        if (!sessionToken) {
+            res.sendStatus(403)
+            return
+        }
+        const user: User = await findBySession(sessionToken) as User
+
+        if (!user) {
+            res.sendStatus(403)
+            return
+        }
+
+        next()
+    })
+
+    app.get('/isAuthenticatedTest', (req: Request, res: Response) => {
+        res.send(' if you have reached this you should be authenticated, if you dont have a cookie then ggs')
+    })
+
+
 
     // error handling, does not require a path, and it ALWAYS takes 4 arguments
     // without the 4 arguments it will not be recognized as an error handling
