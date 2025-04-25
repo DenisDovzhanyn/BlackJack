@@ -7,6 +7,7 @@ import cookieParser from 'cookie-parser'
 import authRoutes from './routes/authRoutes';
 import { findBySession } from './db/user';
 import { User } from './models/user';
+import { requireAuth } from './middleware/requireAuth';
 
 async function main () {
     // load our secrets
@@ -42,21 +43,7 @@ async function main () {
     // if something requires auth, it must be placed after this middle ware, to ensure
     // that the user has a session token and is logged in. If it is placed before this,
     // then the user's validity will not be checked
-    app.use( async (req: Request, res: Response, next: express.NextFunction) => {
-        const { sessionToken } = req.cookies
-        if (!sessionToken) {
-            res.sendStatus(403)
-            return
-        }
-        const user: User = await findBySession(sessionToken) as User
-
-        if (!user) {
-            res.sendStatus(403)
-            return
-        }
-
-        next()
-    })
+    app.use(requireAuth)
 
     app.get('/isAuthenticatedTest', (req: Request, res: Response) => {
         res.send(' if you have reached this you should be authenticated, if you dont have a cookie then ggs')
