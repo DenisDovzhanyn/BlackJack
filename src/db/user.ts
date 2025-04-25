@@ -3,15 +3,17 @@ import {User} from '../models/user'
 import * as mongoDb from 'mongodb'
 import { hash, randomBytes } from "crypto";
 
+const DB_NAME = process.env.DB_NAME!
+
 export const findByUsername = async (username: string) => {
     // connect/retrieve the user collection 
-    const userCol: mongoDb.Collection = getDb('blackjack').collection('users')
+    const userCol: mongoDb.Collection = getDb(DB_NAME).collection('users')
     // try to find a user based on username
     return await userCol.findOne({username: username})
 }
 
 export const findBySession = async (sessionToken: string) => {
-    const userCol: mongoDb.Collection = getDb('blackjack').collection('users')
+    const userCol: mongoDb.Collection = getDb(DB_NAME).collection('users')
     
     return await userCol.findOne( {authorization: { sessionToken: sessionToken }} )
 }
@@ -34,20 +36,18 @@ export const insertUser = async (username: string, password: string, cookie: str
         totalProfits: 0
     }
 
-    const userCol: mongoDb.Collection = getDb('blackjack').collection('users')
+    const userCol: mongoDb.Collection = getDb(DB_NAME).collection('users')
     // insert into mongodb and return the user id
     return await userCol.insertOne(user)
 }
 
 export const updateSession = async (username: string, cookie: string) => {
-    const userCol: mongoDb.Collection = getDb('blackjack').collection('users')
+    const userCol: mongoDb.Collection = getDb(DB_NAME).collection('users')
 
     await userCol.updateOne(
         {username: username}, {
             $set: {
-                authorization: {
-                    sessionToken: cookie
-                }
+                "authorization.sessionToken": cookie
             }
         }
     )

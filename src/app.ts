@@ -17,7 +17,7 @@ async function main () {
     // establish connection to our mongodb server
     await connectDb()
 
-    const db: mongoDb.Db = getDb('blackjack')
+    const db: mongoDb.Db = getDb(process.env.DB_NAME!)
 
     console.log(`successfully connected to ${db.databaseName} database`)
 

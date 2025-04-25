@@ -2,6 +2,7 @@ import { Request, Response } from 'express'
 import { findByUsername, insertUser, updateSession } from '../db/user'
 import { hash, randomBytes } from 'crypto'
 import { User } from '../models/user'
+
 export const register = async (req: Request, res: Response) => {
     try {
         // we will try to pull the username and password from the body
