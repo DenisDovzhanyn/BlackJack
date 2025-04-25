@@ -36,6 +36,13 @@ async function main () {
     // to authentication, such as logging in or registering
     app.use('/auth', authRoutes)
 
+    // error handling, does not require a path, and it ALWAYS takes 4 arguments
+    // without the 4 arguments it will not be recognized as an error handling
+    // middle ware function
+    app.use((err: Error, req: Request, res: Response, next: express.NextFunction) => {
+        console.log(err)
+        res.status(500).send('Uh oh something broke!')
+    })
     // spin up an http server listening on port 8080
     app.listen(port, () => {
         console.log(`listening on port ${port}`)

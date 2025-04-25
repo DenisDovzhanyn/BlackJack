@@ -5,7 +5,8 @@ export interface User {
     username: string,
     authorization: {
         password: string,
-        salt: string
+        salt: string,
+        sessionToken?: string
     },
     balance: number | 1000,
     totalProfits: number | 0 

@@ -10,10 +10,10 @@ export const findByUsername = async (username: string) => {
     return await userCol.findOne({username: username})
 }
 
-export const insertUser = async (username: string, password: string) => {
+export const insertUser = async (username: string, password: string, cookie: string) => {
     // generate a salt which will be used with the base password to create
     // a hash
-    const salt: string = randomBytes(128).toString()
+    const salt: string = randomBytes(128).toString('hex')
     // concatenate password and salt, then hash using sha-256 algorithm
     const hashedPassword: string = hash('sha-256', password + salt)
 
@@ -22,7 +22,8 @@ export const insertUser = async (username: string, password: string) => {
         username: username,
         authorization: {
             password: hashedPassword,
-            salt: salt
+            salt: salt,
+            sessionToken: cookie
         },
         balance: 1000,
         totalProfits: 0
@@ -31,4 +32,18 @@ export const insertUser = async (username: string, password: string) => {
     const userCol: mongoDb.Collection = getDb('blackjack').collection('users')
     // insert into mongodb and return the user id
     return await userCol.insertOne(user)
+}
+
+export const updateSession = async (username: string, cookie: string) => {
+    const userCol: mongoDb.Collection = getDb('blackjack').collection('users')
+
+    await userCol.updateOne(
+        {username: username}, {
+            $set: {
+                authorization: {
+                    sessionToken: cookie
+                }
+            }
+        }
+    )
 }
