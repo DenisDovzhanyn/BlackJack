@@ -5,8 +5,6 @@ import { connectDb, getDb } from './mongodb';
 
 import cookieParser from 'cookie-parser'
 import authRoutes from './routes/authRoutes';
-import { findBySession } from './db/user';
-import { User } from './models/user';
 import { requireAuth } from './middleware/requireAuth';
 
 async function main () {
@@ -40,7 +38,7 @@ async function main () {
     app.use('/auth', authRoutes)
 
 
-    // if something requires auth, it must be placed after this middle ware, to ensure
+    // if something requires auth, it must be placed after this middle ware to ensure
     // that the user has a session token and is logged in. If it is placed before this,
     // then the user's validity will not be checked
     app.use(requireAuth)

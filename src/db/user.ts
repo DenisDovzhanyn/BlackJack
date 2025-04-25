@@ -52,3 +52,16 @@ export const updateSession = async (username: string, cookie: string) => {
         }
     )
 }
+
+export const updateBalanceAndTotalProfit = async (cookie: string, amountAdded: number) {
+    const userCol: mongoDb.Collection  = getDb(DB_NAME).collection('users')
+
+    await userCol.updateOne(
+        {"authorization.sessionToken": cookie}, {
+            $inc: {
+                balance: amountAdded,
+                totalProfits: amountAdded
+            }
+        }
+    )
+}
