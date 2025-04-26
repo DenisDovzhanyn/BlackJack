@@ -26,7 +26,8 @@ export const register = async (req: Request, res: Response) => {
         
         const cookie = randomBytes(128).toString('hex')
         const newUser = await insertUser(username, password, cookie)
-        res.cookie('sessionToken', cookie, {httpOnly: true}).status(200).json(newUser).end()
+        console.log(`new user! ${username}`)
+        res.cookie('sessionToken', cookie, {httpOnly: true}).json({hasCookie: 'true'}).status(200).json(newUser).end()
     } catch (err) {
         // if any error happens we send a 400 status code
         console.log(err)
@@ -39,13 +40,13 @@ export const login = async (req: Request, res: Response) => {
     const { username, password} = req.body
 
     if (!username || !password) {
-        res.sendStatus(400)
+        res.status(400).json({error: 'Missing username or password'}).end()
         return
     }
     const user: User = await findByUsername(username) as User
 
     if (!user) {
-        res.sendStatus(400)
+        res.status(403).json({error: 'Incorrect username or password'}).end()
         return
     }
 
@@ -53,12 +54,12 @@ export const login = async (req: Request, res: Response) => {
     const hashedPassword: string = hash('sha-256', password + user.authorization.salt)
     
     if (expectedPassword != hashedPassword) {
-        res.sendStatus(403)
+        res.status(403).json({error: 'Incorrect username or password'}).end()
         return
     }
 
     const cookie: string = randomBytes(128).toString('hex')
     await updateSession(username, cookie)
-
-    res.status(200).cookie('sessionToken', cookie, {httpOnly: true}).end()
+    console.log(`${username} has logged in!`)
+    res.status(200).cookie('sessionToken', cookie, {httpOnly: true}).json({hasCookie: 'true'}).end()
 }

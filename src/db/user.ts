@@ -45,7 +45,7 @@ export const updateSession = async (username: string, cookie: string) => {
     const userCol: mongoDb.Collection = getDb(DB_NAME).collection('users')
 
     await userCol.updateOne(
-        {username: username}, {
+        {username}, {
             $set: {
                 "authorization.sessionToken": cookie
             }

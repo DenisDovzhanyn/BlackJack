@@ -2,7 +2,7 @@ import express, {Request, Response} from 'express'
 import * as dotenv from 'dotenv'
 import * as mongoDb from 'mongodb'
 import { connectDb, getDb } from './mongodb';
-
+import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import authRoutes from './routes/authRoutes';
 import { requireAuth } from './middleware/requireAuth';
@@ -11,7 +11,7 @@ async function main () {
     // load our secrets
     dotenv.config()
     const app = express();
-    const port = 8080;
+    const port = 8000;
 
     // establish connection to our mongodb server
     await connectDb()
@@ -24,7 +24,7 @@ async function main () {
     // if the contenttype in the req is json, it'll parse it for us and give us
     // a nice data structure which will let us easily access and look for fields
     // if there are cookies the cookie parser will help us with being able to use them
-
+    app.use(cors({origin: process.env.CORS_ORIGIN ,credentials: true}))
     app.use(express.json())
     app.use(cookieParser())
 
