@@ -27,7 +27,7 @@ export const register = async (req: Request, res: Response) => {
         const cookie = randomBytes(128).toString('hex')
         const newUser = await insertUser(username, password, cookie)
         console.log(`new user! ${username}`)
-        res.cookie('sessionToken', cookie, {httpOnly: true}).json({hasCookie: 'true'}).status(200).json(newUser).end()
+        res.status(200).cookie('sessionToken', cookie, {httpOnly: true}).json({id: newUser.insertedId}).end()
     } catch (err) {
         // if any error happens we send a 400 status code
         console.log(err)
@@ -61,5 +61,5 @@ export const login = async (req: Request, res: Response) => {
     const cookie: string = randomBytes(128).toString('hex')
     await updateSession(username, cookie)
     console.log(`${username} has logged in!`)
-    res.status(200).cookie('sessionToken', cookie, {httpOnly: true}).json({hasCookie: 'true'}).end()
+    res.status(200).cookie('sessionToken', cookie, {httpOnly: true}).json({id: user._id}).end()
 }

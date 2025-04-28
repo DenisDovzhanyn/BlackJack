@@ -8,6 +8,6 @@ export interface User {
         salt: string,
         sessionToken?: string
     },
-    balance: number | 1000,
-    totalProfits: number | 0 
+    balance: number,
+    totalProfits: number
 }

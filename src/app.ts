@@ -54,7 +54,7 @@ async function main () {
     // middle ware function
     app.use((err: Error, req: Request, res: Response, next: express.NextFunction) => {
         console.log(err)
-        res.status(500).send('Uh oh something broke!')
+        res.status(500).json({error: 'uh oh something broke'}).end()
     })
     // spin up an http server listening on port 8080
     app.listen(port, () => {

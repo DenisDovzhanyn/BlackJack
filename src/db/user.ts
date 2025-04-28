@@ -26,7 +26,7 @@ export const insertUser = async (username: string, password: string, cookie: str
 
     // put data into an object of type User
     const user: User = {
-        username: username,
+        username,
         authorization: {
             password: hashedPassword,
             salt: salt,
