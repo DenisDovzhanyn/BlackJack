@@ -9,7 +9,7 @@ export const register = async (req: Request, res: Response) => {
         const {username, password} = req.body
         // if one is missing we will send 400 status code and return
         if (!username || !password) {
-            res.sendStatus(400)
+            res.status(400).json({error: 'Username or Password missing'})
             return
         }
 
@@ -17,7 +17,7 @@ export const register = async (req: Request, res: Response) => {
         const user = await findByUsername(username)
 
         if (user) {
-            res.sendStatus(400)
+            res.status(400).json({error: 'User already exists, sorry!'})
             return
         }  
         
