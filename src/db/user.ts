@@ -40,7 +40,11 @@ export const insertUser = async (username: string, password: string, cookie: str
     // insert into mongodb and return the user id
     return await userCol.insertOne(user)
 }
+export const deleteUser = async (username: string) => {
+    const userCol: mongoDb.Collection = getDb(DB_NAME).collection('users')
 
+    return await userCol.deleteOne({username: username})
+}
 export const updateSession = async (username: string, cookie: string) => {
     const userCol: mongoDb.Collection = getDb(DB_NAME).collection('users')
 
