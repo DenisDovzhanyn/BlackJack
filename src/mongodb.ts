@@ -9,6 +9,7 @@ const client: mongoDb.MongoClient = new mongoDb.MongoClient(process.env.DB_CONN_
 export const connectDb = async () => {
     try {
         await client.connect()
+        console.log(`connected to database client`)
     } catch (err) {
         console.log(err)
     }

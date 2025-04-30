@@ -9,7 +9,7 @@ export const findByUsername = async (username: string) => {
     // connect/retrieve the user collection 
     const userCol: mongoDb.Collection = getDb(DB_NAME).collection('users')
     // try to find a user based on username
-    return await userCol.findOne({username: username})
+    return await userCol.findOne( {username: {'$regex': username, '$options': 'i'} } )
 }
 
 export const findBySession = async (sessionToken: string) => {
