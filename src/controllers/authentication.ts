@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { findByUsername, insertUser, updateSession } from '../db/user'
 import { hash, randomBytes } from 'crypto'
-import { User } from '../models/user'
+import { User, UserDTO } from '../models/user'
 
 export const register = async (req: Request, res: Response) => {
     try {
@@ -14,7 +14,7 @@ export const register = async (req: Request, res: Response) => {
         }
 
         // if we find a user by the same username, we send 400 and return
-        const user = await findByUsername(username)
+        const user: User | null = await findByUsername(username)
 
         if (user) {
             res.status(400).json({error: 'User already exists, sorry!'})
@@ -23,11 +23,18 @@ export const register = async (req: Request, res: Response) => {
         
         // if no existing user we insert a new user into our user collection
         // and send the user id returned back ( subject to change )
-        
         const cookie = randomBytes(128).toString('hex')
-        const newUser = await insertUser(username, password, cookie)
+        let newUser: User
+
+        try {
+            newUser = await insertUser(username, password, cookie)
+        } catch (error) {
+            res.status(500).json({error: 'Failed to create new user'}).end()
+            return
+        }
+
         console.log(`new user! ${username}`)
-        res.status(200).cookie('sessionToken', cookie, {httpOnly: true}).json({id: newUser.insertedId}).end()
+        res.status(200).cookie('sessionToken', cookie, {httpOnly: true}).json(newUser.serialize()).end()
     } catch (err) {
         // if any error happens we send a 400 status code
         console.log(err)
@@ -37,13 +44,13 @@ export const register = async (req: Request, res: Response) => {
 
 
 export const login = async (req: Request, res: Response) => {
-    const { username, password} = req.body
+    const { username, password } = req.body
 
     if (!username || !password) {
         res.status(400).json({error: 'Missing username or password'}).end()
         return
     }
-    const user: User = await findByUsername(username) as User
+    const user: User | null = await findByUsername(username)
 
     if (!user) {
         res.status(403).json({error: 'Incorrect username or password'}).end()
@@ -59,7 +66,13 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const cookie: string = randomBytes(128).toString('hex')
-    await updateSession(username, cookie)
+
+    // we will try to update the users sessionToken in mongodb, if for whatever reason it fails we send a 400 and error
+    if (!(await updateSession(username, cookie))) {
+        res.status(400).json({error: 'There was an error logging you in'}).end()
+        return
+    }
+
     console.log(`${username} has logged in!`)
-    res.status(200).cookie('sessionToken', cookie, {httpOnly: true}).json({id: user._id}).end()
+    res.status(200).cookie('sessionToken', cookie, {httpOnly: true}).json(user.serialize()).end()
 }

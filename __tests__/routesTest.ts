@@ -17,6 +17,10 @@ describe('POST /auth/register', () => {
         expect(response.statusCode).toBe(200)
         expect(response.headers['set-cookie'][0]).toContain('sessionToken')
         expect(response.body).toHaveProperty('id')
+        expect(response.body).toHaveProperty('username')
+        expect(response.body).toHaveProperty('balance')
+        expect(response.body).toHaveProperty('totalProfits')
+
     })
 
     it('should not allow duplicate usernames', async () => {
@@ -47,6 +51,9 @@ describe('POST /auth/login', () => {
         expect(response.statusCode).toBe(200)
         expect(response.headers['set-cookie'][0]).toContain('sessionToken')
         expect(response.body).toHaveProperty('id')
+        expect(response.body).toHaveProperty('username')
+        expect(response.body).toHaveProperty('balance')
+        expect(response.body).toHaveProperty('totalProfits')
     })
 
     it('should update the users cookie in mongodb', async () => {

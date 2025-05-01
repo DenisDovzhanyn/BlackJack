@@ -1,71 +1,64 @@
 import { getDb } from "../mongodb";
-import {User} from '../models/user'
+import { User, UserDocument} from '../models/user'
 import * as mongoDb from 'mongodb'
 import { hash, randomBytes } from "crypto";
 
-const DB_NAME = process.env.DB_NAME!
+const userCol: mongoDb.Collection = getDb(process.env.DB_NAME!).collection('users')
 
-export const findByUsername = async (username: string) => {
-    // connect/retrieve the user collection 
-    const userCol: mongoDb.Collection = getDb(DB_NAME).collection('users')
+export const findByUsername = async (username: string): Promise<User | null> => {
     // try to find a user based on username
-    return await userCol.findOne( {username: {'$regex': username, '$options': 'i'} } )
+    const foundUser =  await userCol.findOne( {username: {'$regex': username, '$options': 'i'} } )
+    if (!foundUser) return null
+
+    return new User(foundUser as UserDocument)
 }
 
-export const findBySession = async (sessionToken: string) => {
-    const userCol: mongoDb.Collection = getDb(DB_NAME).collection('users')
-    
-    return await userCol.findOne( {authorization: { sessionToken: sessionToken }} )
+export const findBySession = async (sessionToken: string): Promise<User | null> => {
+    const foundUser = await userCol.findOne( {authorization: { sessionToken: sessionToken }} ) as User
+    if (!foundUser) return null
+
+    return new User(foundUser as UserDocument)
 }
-export const insertUser = async (username: string, password: string, cookie: string) => {
-    // generate a salt which will be used with the base password to create
-    // a hash
+
+export const insertUser = async (username: string, password: string, cookie: string): Promise<User> => {
     const salt: string = randomBytes(128).toString('hex')
-    // concatenate password and salt, then hash using sha-256 algorithm
     const hashedPassword: string = hash('sha-256', password + salt)
 
-    // put data into an object of type User
-    const user: User = {
-        username,
-        authorization: {
-            password: hashedPassword,
-            salt: salt,
-            sessionToken: cookie
-        },
-        balance: 1000,
-        totalProfits: 0
-    }
+    const user: User = new User({username, authorization: {password: hashedPassword, salt, sessionToken: cookie}})
+    
+    const resp = await userCol.insertOne(user)
 
-    const userCol: mongoDb.Collection = getDb(DB_NAME).collection('users')
-    // insert into mongodb and return the user id
-    return await userCol.insertOne(user)
+    if(!resp.acknowledged) throw new Error()
+    
+    user.setId(resp.insertedId)
+    return user
+} 
+
+export const deleteUser = async (username: string): Promise<boolean> => {
+    return (await userCol.deleteOne({username: username})).acknowledged
 }
-export const deleteUser = async (username: string) => {
-    const userCol: mongoDb.Collection = getDb(DB_NAME).collection('users')
 
-    return await userCol.deleteOne({username: username})
-}
-export const updateSession = async (username: string, cookie: string) => {
-    const userCol: mongoDb.Collection = getDb(DB_NAME).collection('users')
-
-    await userCol.updateOne(
+export const updateSession = async (username: string, cookie: string): Promise<boolean> => {
+    return (await userCol.updateOne(
         {username}, {
             $set: {
                 "authorization.sessionToken": cookie
             }
         }
-    )
+    )).acknowledged
 }
 
-export const updateBalanceAndTotalProfit = async (cookie: string, amountAdded: number) => {
-    const userCol: mongoDb.Collection  = getDb(DB_NAME).collection('users')
-
-    await userCol.updateOne(
-        {"authorization.sessionToken": cookie}, {
+export const updateBalanceAndTotalProfit = async (_id: mongoDb.ObjectId, amountAdded: number): Promise<User | null> => {
+    const updatedUser =  await userCol.findOneAndUpdate(
+        {_id}, {
             $inc: {
                 balance: amountAdded,
                 totalProfits: amountAdded
             }
-        }
-    )
+        },
+        {returnDocument: 'after'}
+    ) 
+
+    if (!updatedUser) return null
+    return new User(updatedUser as UserDocument)
 }

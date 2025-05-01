@@ -20,8 +20,8 @@ export const getDb = (dbName: string) => {
     return client.db(dbName)
 }
 
-export const closeConnection = () => {
-    return client.close()
+export const closeConnection = async () => {
+    return await client.close()
 }
 // this is done this way so that the mongodb can be accessed throughout
 // the entire application
