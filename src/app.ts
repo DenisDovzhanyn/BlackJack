@@ -9,7 +9,7 @@ import { requireAuth } from './middleware/requireAuth';
     // if the contenttype in the req is json, it'll parse it for us and give us
     // a nice data structure which will let us easily access and look for fields
     // if there are cookies the cookie parser will help us with being able to use them
-    app.use(cors({origin: process.env.CORS_ORIGIN ,credentials: true}))
+    app.use(cors({origin: process.env.CORS_ORIGIN , credentials: true}))
     app.use(express.json())
     app.use(cookieParser())
 

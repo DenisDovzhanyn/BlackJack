@@ -1,6 +1,6 @@
-import { Db,Collection } from "mongodb"
-import { closeConnection, connectDb, getDb } from "../src/mongodb"
-import { deleteUser, findByUsername, insertUser } from "../src/db/user"
+
+import { closeConnection, connectDb } from "../src/mongodb"
+import { deleteUser, findByUsername } from "../src/db/user"
 import request, { Response } from 'supertest'
 import app from "../src/app"
 import { User } from "../src/models/user"
@@ -25,11 +25,13 @@ describe('POST /auth/register', () => {
         expect(response.body.error).toMatch('User already exists, sorry!')
     })
 
-    it('should not allow empty usernames or passwords', async () => {
+    it('should not allow empty username', async () => {
         const emptyUserResponse = await request(app).post('/auth/register').send({username: '', password: 'test'})
         expect(emptyUserResponse.statusCode).toBe(400)
         expect(emptyUserResponse.body.error).toMatch('Username or Password missing')
-        
+    })
+
+    it('should not allow empty password', async () => {
         const emptyPasswordResponse = await request(app).post('/auth/register').send({username: 'iShouldReallyMockMyDatabaseCalls', password: ''})
         expect(emptyPasswordResponse.statusCode).toBe(400)
         expect(emptyPasswordResponse.body.error).toMatch('Username or Password missing')
@@ -45,9 +47,8 @@ describe('POST /auth/login', () => {
         expect(response.statusCode).toBe(200)
         expect(response.headers['set-cookie'][0]).toContain('sessionToken')
         expect(response.body).toHaveProperty('id')
-
-        
     })
+
     it('should update the users cookie in mongodb', async () => {
         const user: User = await findByUsername('test') as User
         const lastLetterOfCookieIndex = response.headers['set-cookie'][0].indexOf(';')

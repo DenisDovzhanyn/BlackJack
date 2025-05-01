@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv'
 import { connectDb } from './mongodb'
 import app from './app';
 
-async function main () {
+(async () => {
     const port = 8000;
     dotenv.config()
 
@@ -12,6 +12,4 @@ async function main () {
     app.listen(port, () => {
         console.log(`server started on port: ${port}`)
     })
-}
-
-main()
+})()
