@@ -9,7 +9,7 @@ export const register = async (req: Request, res: Response) => {
         const {username, password} = req.body
         // if one is missing we will send 400 status code and return
         if (!username || !password) {
-            res.status(400).json({error: 'Username or Password missing'})
+            res.status(422).json({error: 'Username or Password missing'})
             return
         }
 
@@ -17,7 +17,7 @@ export const register = async (req: Request, res: Response) => {
         const user: User | null = await findByUsername(username)
 
         if (user) {
-            res.status(400).json({error: 'User already exists, sorry!'})
+            res.status(409).json({error: 'User already exists, sorry!'})
             return
         }  
         
@@ -34,7 +34,7 @@ export const register = async (req: Request, res: Response) => {
         }
 
         console.log(`new user! ${username}`)
-        res.status(200).cookie('sessionToken', cookie, {httpOnly: true}).json(newUser.serialize()).end()
+        res.status(201).cookie('sessionToken', cookie, {httpOnly: true}).json(newUser.serialize()).end()
     } catch (err) {
         // if any error happens we send a 400 status code
         console.log(err)

@@ -14,7 +14,7 @@ describe('POST /auth/register', () => {
     
     it('should allow users to sign up', async () => {
         const response = await request(app).post('/auth/register').send({username: 'test', password: 'test'})
-        expect(response.statusCode).toBe(200)
+        expect(response.statusCode).toBe(201)
         expect(response.headers['set-cookie'][0]).toContain('sessionToken')
         expect(response.body).toHaveProperty('id')
         expect(response.body).toHaveProperty('username')
@@ -25,19 +25,23 @@ describe('POST /auth/register', () => {
 
     it('should not allow duplicate usernames', async () => {
         const response = await request(app).post('/auth/register').send({username: 'test', password: 'test'})
-        expect(response.statusCode).toBe(400)
+        expect(response.statusCode).toBe(409)
         expect(response.body.error).toMatch('User already exists, sorry!')
+        
+        const responseTwo = await request(app).post('/auth/register').send({username: 'TeSt', password: 'test'})
+        expect(responseTwo.statusCode).toBe(409)
+        expect(responseTwo.body.error).toMatch('User already exists, sorry!')
     })
 
     it('should not allow empty username', async () => {
         const emptyUserResponse = await request(app).post('/auth/register').send({username: '', password: 'test'})
-        expect(emptyUserResponse.statusCode).toBe(400)
+        expect(emptyUserResponse.statusCode).toBe(422)
         expect(emptyUserResponse.body.error).toMatch('Username or Password missing')
     })
 
     it('should not allow empty password', async () => {
         const emptyPasswordResponse = await request(app).post('/auth/register').send({username: 'iShouldReallyMockMyDatabaseCalls', password: ''})
-        expect(emptyPasswordResponse.statusCode).toBe(400)
+        expect(emptyPasswordResponse.statusCode).toBe(422)
         expect(emptyPasswordResponse.body.error).toMatch('Username or Password missing')
     })
 }) 
