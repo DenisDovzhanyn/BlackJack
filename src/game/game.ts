@@ -2,8 +2,8 @@ import { ObjectId } from "mongodb";
 
 export class BlackJackGame{
     playerId: ObjectId;
-    playerHand!: Card[];
-    dealerHand!: Card[];
+    playerHand: Hand;
+    dealerHand: Hand;
     deck: Deck;
     betAmount: number
     doubleDown!: boolean
@@ -14,27 +14,26 @@ export class BlackJackGame{
         this.playerId = playerId
         this.betAmount = betAmount
         this.deck = new Deck()
-        this.playerHand = []
-        this.dealerHand = []
+        this.playerHand = new Hand()
+        this.dealerHand = new Hand()
 
         for (let i = 0; i < 3; i++) {
             const card = this.deck.deal(true)
-            if (card) this.playerHand.push(card)
+            this.playerHand.addCard(card)
             
             const dealerCard = this.deck.deal(i == 0)
-            if (dealerCard) this.dealerHand.push(dealerCard)
+            this.dealerHand.addCard(dealerCard)
         }
     }
 
     hit(isPlayer: boolean): void {
         const card = this.deck.deal(true)
-        if (!card) return
 
         if (isPlayer) {
-            this.playerHand.push(card)
+            this.playerHand.addCard(card)
         } else {
             card.isFacingUp = false
-            this.dealerHand.push(card)
+            this.dealerHand.addCard(card)
         }
     }
 
@@ -46,25 +45,12 @@ class Deck {
 
     constructor() {
         this.cardsInDeck = []
-        let cardNames = names()
-        let nameIterator = 0
 
-        for (const suit in suits()) {
+        for (const suit in suits) {
             for (let i = 0; i < 14; i++) {
-                if (i == 0) {
-                    this.cardsInDeck.push(new Card([1, 11], suit, cardNames[nameIterator].Name, false))
-                    nameIterator++
-                    continue
-                } else if (i >= 10) {
-                    nameIterator++
-                    this.cardsInDeck.push(new Card(10, suit, cardNames[nameIterator].Name, false))
-                    continue
-                }
-
-                this.cardsInDeck.push(new Card(i + 1, suit, cardNames[nameIterator].Name, false))
+                this.cardsInDeck.push(new Card(suit, i))
             }
         }
-
         this.shuffle()
     }
 
@@ -77,9 +63,8 @@ class Deck {
         }
     }
 
-    deal(isFaceUp: boolean): Card | undefined {
-        const dealtCard =  this.cardsInDeck.pop()
-        if (!dealtCard) return undefined
+    deal(isFaceUp: boolean): Card  {
+        const dealtCard =  this.cardsInDeck.pop()!
 
         dealtCard.isFacingUp = isFaceUp
         return dealtCard
@@ -88,11 +73,10 @@ class Deck {
 
 class Hand {
     cards: Card[];
-    handValue!: number[];
+    handValue!: number;
 
-    constructor(cards: Card[]) {
+    constructor(cards: Card[] = []) {
         this.cards = cards
-        this.handValue = []
     }
 
     addCard(card: Card): void {
@@ -103,49 +87,53 @@ class Hand {
         let amountOfAces = 0
 
         for (const card of this.cards) {
-            if (!Array.isArray(card.value)) {
-                this.handValue[0] += card.value
-            } else {
-                amountOfAces++
-                this.handValue[0] += card.value[0]
-            }
+            this.handValue += card.value
+            if (card.id == 0) amountOfAces++
         }
 
-        for (let i = 1; i <= amountOfAces; i++) {
-            this.handValue[i] = (this.handValue[0] - i) + (i * 11)
+        // aces are put in as 11 instead of 1 automatically, if we are over 21 we will subtract by 10, making the ace count as 1 and
+        // reduce the amount of 'aces' left
+        while (this.handValue > 21 && amountOfAces > 0) {
+            this.handValue -= 10
+            amountOfAces--
         }
     }
 }
 
 class Card {
-    value: number | number[];
+    value: number;
     suit: string;
+    id: number
     name?: string;
     isFacingUp: boolean;
 
-    constructor(value: number | number[], suit: string, name: string | undefined = undefined, isFacingUp: boolean) {
-        this.value = value
+    constructor(suit: string, id: number) {
         this.suit = suit
-        this.name = name;
-        this.isFacingUp = isFacingUp
+        this.isFacingUp = false
+        this.id = id
+
+        if (id == 0) {
+            this.value = 11
+            this.name = 'Ace'
+        } else if (id < 10) {
+            this.value = id + 1
+            this.name = 'Number'
+        } else {
+            this.value = 10
+            this.name = this.getName(id)
+        }
+    }
+
+    getName(id: number): string {
+        if (id == 11) return 'Jack'
+        else if (id == 12) return 'King'
+        else return 'Queen'
     }
 }
 
-const suits = () => {
-    return [
-        {Suit: 'Hearts'},
-        {Suit: 'Spades'},
-        {Suit: 'Diamonds'},
-        {Suit: 'Clubs'}
-    ]
-}
-
-const names = () =>  {
-    return [
-        {Name: 'Ace'},
-        {Name: 'Number'},
-        {Name: 'Jack'},
-        {Name: 'King'},
-        {Name: 'Queen'}
-    ]
-}
+const suits = [
+    'Hearts',
+    'Spades',
+    'Diamonds',
+    'Clubs'
+]
