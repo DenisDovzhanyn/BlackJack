@@ -1,19 +1,24 @@
 import { Request, Response, NextFunction } from "express"
-import { User } from "../models/user"
-import { findBySession } from "../db/user"
+import { findById } from "../db/user"
 
 export const requireAuth =  async (req: Request, res: Response, next: NextFunction) => {
     const { sessionToken } = req.cookies
-    if (!sessionToken) {
-        res.sendStatus(403)
+    const { id } = req.body
+
+    if (!sessionToken || !id) {
+        res.sendStatus(401)
         return
     }
-    const user: User = await findBySession(sessionToken) as User
+    
+    const user = await findById(id)
 
-    if (!user) {
-        res.sendStatus(403)
+    if (!user || user.authorization.sessionToken != sessionToken) {
+        res.sendStatus(401)
         return
     }
 
+    // Because at this point, the user is authenticated and logged in, we assign the user to the res object
+    // so that we do not need to do multiple look ups down the line ( next function )
+    res.locals.user = user
     next()
 }

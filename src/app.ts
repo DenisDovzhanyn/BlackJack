@@ -2,6 +2,7 @@ import express, {Request, Response} from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import authRoutes from './routes/authRoutes';
+import gameRoutes from './routes/gameRoutes';
 import { requireAuth } from './middleware/requireAuth';
 
     const app = express();
@@ -26,11 +27,9 @@ import { requireAuth } from './middleware/requireAuth';
     // that the user has a session token and is logged in. If it is placed before this,
     // then the user's validity will not be checked
     app.use(requireAuth)
-
-    app.get('/isAuthenticatedTest', (req: Request, res: Response) => {
-        res.send(' if you have reached this you should be authenticated, if you dont have a cookie then ggs')
-    })
-
+    
+    app.use('/game', gameRoutes)
+    
     // error handling, does not require a path, and it ALWAYS takes 4 arguments
     // without the 4 arguments it will not be recognized as an error handling
     // middle ware function

@@ -13,8 +13,16 @@ export const findByUsername = async (username: string): Promise<User | null> => 
     return new User(foundUser as UserDocument)
 }
 
+export const findById = async (userId: string): Promise<User | null> => {
+    const _id = new mongoDb.ObjectId(userId)
+    const foundUser = await userCol.findOne({_id})
+    if (!foundUser) return null
+
+    return new User(foundUser as UserDocument)
+}
+
 export const findBySession = async (sessionToken: string): Promise<User | null> => {
-    const foundUser = await userCol.findOne( {authorization: { sessionToken: sessionToken }} ) as User
+    const foundUser = await userCol.findOne( {authorization: { sessionToken: sessionToken }} )
     if (!foundUser) return null
 
     return new User(foundUser as UserDocument)
