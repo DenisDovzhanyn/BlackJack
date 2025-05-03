@@ -1,22 +1,58 @@
 import { ObjectId } from "mongodb";
 
+export interface BlackJackDocument {
+    playerId: ObjectId,
+    playerHand?: Hand,
+    dealerHand?: Hand,
+    deck?: Deck,
+    betAmount: number,
+    stand?: boolean,
+    doubleDown?: boolean,
+    insurance?: boolean,
+    insuranceBet?: number,
+    turnCount?: number
+}
 export class BlackJackGame{
     playerId: ObjectId;
     playerHand: Hand;
     dealerHand: Hand;
     deck: Deck;
     betAmount: number
-    doubleDown!: boolean
-    insurance!: boolean
-
-
-    constructor(playerId: ObjectId, betAmount: number) {
+    stand: boolean
+    doubleDown: boolean
+    insurance: boolean
+    insuranceBet?: number
+    turnCount: number
+    
+    // i think we will only want to inc the turnCount when a user hits our api to hit/stand/doubledown ? 
+    // with doubling down/ insurance having special conditions
+    // and another thing, I am storing the game and also calculating the dealer hands value, however we do not want to include this
+    // when sending it to the player. the player is not allowed to see any card from the dealer but the first drawn
+    constructor({ 
+        playerId,
+        betAmount,
+        playerHand = new Hand(),
+        dealerHand = new Hand(),
+        deck = new Deck(),
+        stand = false,
+        doubleDown = false,
+        insurance = false,
+        insuranceBet = undefined,
+        turnCount = 1    
+    }: BlackJackDocument) {
         this.playerId = playerId
         this.betAmount = betAmount
-        this.deck = new Deck()
-        this.playerHand = new Hand()
-        this.dealerHand = new Hand()
+        this.playerHand = playerHand
+        this.dealerHand = dealerHand
+        this.deck = deck
+        this.stand = stand
+        this.doubleDown = doubleDown
+        this.insurance = insurance
+        this.insuranceBet = insuranceBet
+        this.turnCount = turnCount
+    }
 
+    beginGame() {
         for (let i = 0; i < 3; i++) {
             const card = this.deck.deal(true)
             this.playerHand.addCard(card)
@@ -24,24 +60,34 @@ export class BlackJackGame{
             const dealerCard = this.deck.deal(i == 0)
             this.dealerHand.addCard(dealerCard)
         }
+        this.dealerHand.calculateValue()
+        this.playerHand.calculateValue()
     }
 
     hit(isPlayer: boolean): void {
-        const card = this.deck.deal(true)
+        const card = this.deck.deal(isPlayer)
 
-        if (isPlayer) {
-            this.playerHand.addCard(card)
-        } else {
-            card.isFacingUp = false
-            this.dealerHand.addCard(card)
-        }
+        isPlayer ? this.playerHand.addCard(card) : this.dealerHand.addCard(card)
     }
 
+    double(): void {
+        // meaning we are on first turn
+        if (this.turnCount != 1) return
+        
+        this.doubleDown = true
+        this.betAmount *= 2
+        const card = this.deck.deal(true)
+        this.playerHand.addCard(card)
+        this.playerHand.calculateValue()
+        this.turnCount++
+        this.stand = true
+    }
+ 
 
 }
 
 class Deck {
-    cardsInDeck: Card[]
+    cardsInDeck: Card[];
 
     constructor() {
         this.cardsInDeck = []

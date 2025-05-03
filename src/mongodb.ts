@@ -1,7 +1,4 @@
 import * as mongoDb from 'mongodb'
-import * as dotenv from 'dotenv'
-
-dotenv.config()
 
 const client: mongoDb.MongoClient = new mongoDb.MongoClient(process.env.DB_CONN_STRING!)
 

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 import { findByUsername, insertUser, updateSession } from '../db/user'
 import { hash, randomBytes } from 'crypto'
-import { User, UserDTO } from '../models/user'
+import { User } from '../models/user'
 
 export const register = async (req: Request, res: Response) => {
     try {
