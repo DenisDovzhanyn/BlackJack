@@ -40,9 +40,9 @@ export const hit = async (req: Request, res: Response) => {
         res.status(400).json({error: 'Existing Game not found'}).end()
         return
     }
-    
+
     game.hit(true)
-    game.playerHand.calculateValue
+    game.playerHand.calculateValue()
     if (game.playerHand.handValue > 21) {
         // we wanna flip all cards up here cus the player has lost,
         // and we want them to feel bad if the dealer had a low hand hahaha

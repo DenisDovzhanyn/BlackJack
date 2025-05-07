@@ -1,7 +1,8 @@
 import express from 'express'
-import { placeBet } from '../controllers/gameController'
+import { hit, placeBet } from '../controllers/gameController'
 const router = express.Router()
 
 router.post('/placebet', placeBet)
+router.post('/hit', hit)
 
 export default router

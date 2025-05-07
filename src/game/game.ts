@@ -42,9 +42,9 @@ export class BlackJackGame{
     constructor({ 
         playerId,
         betAmount,
-        playerHand = new Hand(),
-        dealerHand = new Hand(),
-        deck = new Deck(),
+        playerHand,
+        dealerHand,
+        deck,
         stand = false,
         doubleDown = false,
         insurance = false,
@@ -53,9 +53,9 @@ export class BlackJackGame{
     }: BlackJackDocument) {
         this.playerId = playerId
         this.betAmount = betAmount
-        this.playerHand = playerHand
-        this.dealerHand = dealerHand
-        this.deck = deck
+        this.playerHand = new Hand(playerHand?.cards, playerHand?.handValue)
+        this.dealerHand = new Hand(dealerHand?.cards, dealerHand?.handValue)
+        this.deck = new Deck(deck?.cardsInDeck)
         this.stand = stand
         this.doubleDown = doubleDown
         this.insurance = insurance
@@ -77,7 +77,7 @@ export class BlackJackGame{
 
     hit(isPlayer: boolean): void {
         const card = this.deck.deal(isPlayer)
-
+        
         isPlayer ? this.playerHand.addCard(card) : this.dealerHand.addCard(card)
         this.turnCount++
     }
@@ -125,8 +125,8 @@ export class BlackJackGame{
 class Deck {
     cardsInDeck: Card[];
 
-    constructor() {
-        this.cardsInDeck = []
+    constructor(cardsInDeck: Card[] = []) {
+        this.cardsInDeck = cardsInDeck
 
         for (const suit of suits) {
             for (let i = 0; i < 14; i++) {
@@ -155,11 +155,11 @@ class Deck {
 
 class Hand {
     cards: Card[];
-    handValue!: number;
+    handValue: number;
 
-    constructor(cards: Card[] = []) {
+    constructor(cards: Card[] = [], handValue: number = 0) {
         this.cards = cards
-        this.handValue = 0
+        this.handValue = handValue
     }
 
     addCard(card: Card): void {
@@ -167,6 +167,7 @@ class Hand {
     }
 
     calculateValue(): void {
+        this.handValue = 0
         let amountOfAces = 0
 
         for (const card of this.cards) {
