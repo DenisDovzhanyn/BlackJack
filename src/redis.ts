@@ -25,12 +25,18 @@ export const setGameState = async (game: BlackJackGame) => {
     await client.set(game.playerId.toString(), JSON.stringify(game), {expiration: {type: 'EX' , value: 600}})
 }
 
-export const getGameState = async (userId: ObjectId) => {
+export const getGameState = async (userId: ObjectId): Promise<BlackJackGame | null> => {
     if (!client.isReady) throw new Error('Redis client not ready')
     
     const stringifiedState =  await client.get(userId.toString())
-    if (!stringifiedState) throw new Error('Error getting state or game does not exist')
+    if (!stringifiedState) return null
 
     const gameStateDocument: BlackJackDocument = JSON.parse(stringifiedState)
     return new BlackJackGame(gameStateDocument)
+}
+
+export const deleteGameState = async (userId: ObjectId) =>{
+    if (!client.isReady) throw new Error('Redis client not ready')
+
+    await client.del(userId.toString())
 }

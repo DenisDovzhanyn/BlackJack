@@ -12,6 +12,17 @@ export interface BlackJackDocument {
     insuranceBet?: number,
     turnCount?: number
 }
+
+export interface BlackJackDTO {
+    playerHand: Hand,
+    dealerHand: Hand,
+    betAmount: number,
+    stand?: boolean,
+    doubleDown?: boolean,
+    insurance?: boolean,
+    insuranceBet?: number,
+    turnCount?: number
+}
 export class BlackJackGame{
     playerId: ObjectId;
     playerHand: Hand;
@@ -53,7 +64,7 @@ export class BlackJackGame{
     }
 
     beginGame() {
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 2; i++) {
             const card = this.deck.deal(true)
             this.playerHand.addCard(card)
             
@@ -68,6 +79,7 @@ export class BlackJackGame{
         const card = this.deck.deal(isPlayer)
 
         isPlayer ? this.playerHand.addCard(card) : this.dealerHand.addCard(card)
+        this.turnCount++
     }
 
     double(): void {
@@ -82,7 +94,31 @@ export class BlackJackGame{
         this.turnCount++
         this.stand = true
     }
- 
+    
+    serialize(): BlackJackDTO {
+        const doc: BlackJackDTO = { 
+            playerHand: this.playerHand,
+            dealerHand: this.dealerHand,
+            betAmount: this.betAmount,
+            stand: this.stand,
+            doubleDown: this.doubleDown,
+            insurance: this.insurance,
+            insuranceBet: this.insuranceBet,
+            turnCount: this.turnCount
+        }
+        
+        // we do this so that the user can not cheat and check the dealers face down cards
+        // but we still need a way to tell the client side how many cards the dealer has
+        doc.dealerHand!.cards = doc.dealerHand!.cards.filter((card) => {
+            if (!card.isFacingUp) {
+                doc.dealerHand!.handValue -= card.value
+                return false
+            }
+            return true
+        })
+
+        return doc
+    }
 
 }
 
@@ -92,7 +128,7 @@ class Deck {
     constructor() {
         this.cardsInDeck = []
 
-        for (const suit in suits) {
+        for (const suit of suits) {
             for (let i = 0; i < 14; i++) {
                 this.cardsInDeck.push(new Card(suit, i))
             }
@@ -123,6 +159,7 @@ class Hand {
 
     constructor(cards: Card[] = []) {
         this.cards = cards
+        this.handValue = 0
     }
 
     addCard(card: Card): void {
