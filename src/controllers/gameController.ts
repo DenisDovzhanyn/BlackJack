@@ -3,6 +3,7 @@ import { User } from '../models/user'
 import { updateBalanceAndTotalProfit } from '../db/user'
 import { BlackJackGame } from '../game/game'
 import { deleteGameState, getGameState, setGameState } from '../redis'
+import { dealerPlay } from '../game/dealer'
 
 
 export const placeBet = async (req: Request, res: Response) => {
@@ -47,11 +48,14 @@ export const hit = async (req: Request, res: Response) => {
 
     game.hit(true)
     game.playerHand.calculateValue()
-    if (game.playerHand.handValue > 21) {
-        /*
-        * we wanna flip all cards up here cus the player has lost, and we want them to feel bad if the dealer had a low hand hahaha
-        * we delete the game state because the server does not need it at this point
-        */
+    if (game.playerHand.handValue >= 21) {
+        //* dealer play here because the player cannot hit anymore if they are at 21
+        if (game.playerHand.handValue == 21) {
+            dealerPlay(game)
+            //* if the dealers hand is not equal to 21 at this point, then the dealer has busted so we pay out player
+            if (game.dealerHand.handValue != 21) await updateBalanceAndTotalProfit(game.playerId, game.betAmount * 2)
+        }
+        //* face up cards here so player can see them at this point
         game.dealerHand.cards.forEach((card) => card.isFacingUp = true)
         await deleteGameState(game.playerId)
     } else {
@@ -62,4 +66,38 @@ export const hit = async (req: Request, res: Response) => {
     //TODO needs to act at this point.
 
     res.status(200).json(game.serialize()).end()
+}
+
+export const doubleDown = async (req: Request, res: Response) => {
+    const user: User = res.locals.user
+    const game = await getGameState(user._id!)
+
+    if (!game) {
+        res.status(400).json({error: 'Existing game not found'}).end()
+        return
+    }
+
+    //* doubling down means betAmount * 2, so we can just check whether the user has enough
+    //* to have the bet amount subtracted again
+    if (user.balance < game!.betAmount) {
+        res.status(400).json({error: 'You do not have enough balance to double down'}).end()
+        return
+    }
+
+    //* subtracting the betAmount again from user because the game.double() func will double the bet 
+    await updateBalanceAndTotalProfit(game.playerId, -game.betAmount)
+    game.double()
+
+    //* if player didnt bust we will let dealer try to beat/match
+    if (game.playerHand.handValue <= 21) {
+        dealerPlay(game)
+        if (game.dealerHand.handValue > 21 || game.dealerHand.handValue < game.playerHand.handValue) {
+            await updateBalanceAndTotalProfit(game.playerId, game.betAmount * 2) 
+        }
+        //* in the case the gets more or matches we do nothing because the money has been taken already
+    }
+    
+    game.dealerHand.cards.forEach((card) => card.isFacingUp = true)
+    await deleteGameState(game.playerId)
+    res.send(200).json(game.serialize()).end()
 }
