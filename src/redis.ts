@@ -19,8 +19,8 @@ export const connectToRedis = async () => {
 
 export const setGameState = async (game: BlackJackGame) => {
     if (!client.isReady) throw new Error('Redis client not ready')
-    // we set the game id to the users id since a user can only have one game
-    // going on at once
+    //* we set the game id to the users id since a user can only have one game
+    //* going on at once
 
     await client.set(game.playerId.toString(), JSON.stringify(game), {expiration: {type: 'EX' , value: 600}})
 }

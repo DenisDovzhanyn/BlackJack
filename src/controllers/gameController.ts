@@ -6,9 +6,11 @@ import { deleteGameState, getGameState, setGameState } from '../redis'
 
 
 export const placeBet = async (req: Request, res: Response) => {
-    // here we will want to create a new game instance with the bet if the player
-    // has enough money, then place the game instance into redis for quick
-    // retrieval instead of storing it directly on our server
+    /*
+    * here we will want to create a new game instance with the bet if the player
+    * has enough money, then place the game instance into redis for quick
+    * retrieval instead of storing it directly on our server
+    */
     const { betAmount } = req.body
     const user: User = res.locals.user
     
@@ -24,10 +26,12 @@ export const placeBet = async (req: Request, res: Response) => {
 
     await setGameState(game)
 
-    // after setting the game state i need to send back a blackjackgameDTO, we do not want to show the user
-    // the dealers second card, even though it wont be displayed on the front end, if i was to send a blackjackgame object
-    // the user could just look into their network tab and see what the value of that flipped card is
-    res.status(200).json(game.serialize()).end()
+    /*
+    * after setting the game state i need to send back a blackjackgameDTO, we do not want to show the user
+    * the dealers second card, even though it wont be displayed on the front end, if i was to send a blackjackgame object
+    * the user could just look into their network tab and see what the value of that flipped card is
+    */
+     res.status(200).json(game.serialize()).end()
 }
 
 
@@ -44,13 +48,18 @@ export const hit = async (req: Request, res: Response) => {
     game.hit(true)
     game.playerHand.calculateValue()
     if (game.playerHand.handValue > 21) {
-        // we wanna flip all cards up here cus the player has lost,
-        // and we want them to feel bad if the dealer had a low hand hahaha
+        /*
+        * we wanna flip all cards up here cus the player has lost, and we want them to feel bad if the dealer had a low hand hahaha
+        * we delete the game state because the server does not need it at this point
+        */
         game.dealerHand.cards.forEach((card) => card.isFacingUp = true)
         await deleteGameState(game.playerId)
     } else {
+        //TODO im pretty sure this can throw an error so like you know be careful
         await setGameState(game)
     }
+    //TODO we also need to check does the player have exactly 21? if they do then the dealer
+    //TODO needs to act at this point.
 
     res.status(200).json(game.serialize()).end()
 }

@@ -1,4 +1,6 @@
 import { ObjectId } from "mongodb";
+import { Hand } from "./hand";
+import { Deck } from "./deck";
 
 export interface BlackJackDocument {
     playerId: ObjectId,
@@ -7,7 +9,6 @@ export interface BlackJackDocument {
     deck?: Deck,
     betAmount: number,
     stand?: boolean,
-    doubleDown?: boolean,
     insurance?: boolean,
     insuranceBet?: number,
     turnCount?: number
@@ -18,7 +19,6 @@ export interface BlackJackDTO {
     dealerHand: Hand,
     betAmount: number,
     stand?: boolean,
-    doubleDown?: boolean,
     insurance?: boolean,
     insuranceBet?: number,
     turnCount?: number
@@ -30,15 +30,10 @@ export class BlackJackGame{
     deck: Deck;
     betAmount: number
     stand: boolean
-    doubleDown: boolean
     insurance: boolean
     insuranceBet?: number
     turnCount: number
     
-    // i think we will only want to inc the turnCount when a user hits our api to hit/stand/doubledown ? 
-    // with doubling down/ insurance having special conditions
-    // and another thing, I am storing the game and also calculating the dealer hands value, however we do not want to include this
-    // when sending it to the player. the player is not allowed to see any card from the dealer but the first drawn
     constructor({ 
         playerId,
         betAmount,
@@ -46,7 +41,6 @@ export class BlackJackGame{
         dealerHand,
         deck,
         stand = false,
-        doubleDown = false,
         insurance = false,
         insuranceBet = undefined,
         turnCount = 1    
@@ -57,7 +51,6 @@ export class BlackJackGame{
         this.dealerHand = new Hand(dealerHand?.cards, dealerHand?.handValue)
         this.deck = new Deck(deck?.cardsInDeck)
         this.stand = stand
-        this.doubleDown = doubleDown
         this.insurance = insurance
         this.insuranceBet = insuranceBet
         this.turnCount = turnCount
@@ -79,14 +72,17 @@ export class BlackJackGame{
         const card = this.deck.deal(isPlayer)
         
         isPlayer ? this.playerHand.addCard(card) : this.dealerHand.addCard(card)
+        isPlayer ? this.playerHand.calculateValue() : this.dealerHand.calculateValue()
         this.turnCount++
     }
 
+    //! Now that I think about it maybe we do not need to have a doubledown boolean? 
+    //! Like they are only able to double on the first turn, where we just multiply the betAmount by 2 (winnings = (betAmount *= 2) * 2)
+    //! But besides that we dont really need to know if they've doubleddown, we only need the stand boolean
     double(): void {
-        // meaning we are on first turn
+        //* meaning we are on first turn
         if (this.turnCount != 1) return
         
-        this.doubleDown = true
         this.betAmount *= 2
         const card = this.deck.deal(true)
         this.playerHand.addCard(card)
@@ -101,14 +97,16 @@ export class BlackJackGame{
             dealerHand: this.dealerHand,
             betAmount: this.betAmount,
             stand: this.stand,
-            doubleDown: this.doubleDown,
             insurance: this.insurance,
             insuranceBet: this.insuranceBet,
             turnCount: this.turnCount
         }
         
-        // we do this so that the user can not cheat and check the dealers face down cards
-        // but we still need a way to tell the client side how many cards the dealer has
+        //* we do this so that the user can not cheat and check the dealers face down cards
+        //* but we still need a way to tell the client side how many cards the dealer has
+        //? do I really need to tell the client how many cards the dealer has? 
+        //? the dealer will always deal himself 2 cards after dealing to the player, with one being visible. then the dealer
+        //? will only hit again after the player stands, and at that point the user should be able to see dealer card
         doc.dealerHand!.cards = doc.dealerHand!.cards.filter((card) => {
             if (!card.isFacingUp) {
                 doc.dealerHand!.handValue -= card.value
@@ -121,103 +119,3 @@ export class BlackJackGame{
     }
 
 }
-
-class Deck {
-    cardsInDeck: Card[];
-
-    constructor(cardsInDeck: Card[] = []) {
-        this.cardsInDeck = cardsInDeck
-
-        for (const suit of suits) {
-            for (let i = 0; i < 14; i++) {
-                this.cardsInDeck.push(new Card(suit, i))
-            }
-        }
-        this.shuffle()
-    }
-
-    shuffle(): void {
-        for (let i = 0; i < this.cardsInDeck.length; i++) {
-            let random = Math.floor(Math.random() * (this.cardsInDeck.length))
-            const tempCardHolder: Card = this.cardsInDeck[i]
-            this.cardsInDeck[i] = this.cardsInDeck[random]
-            this.cardsInDeck[random] = tempCardHolder 
-        }
-    }
-
-    deal(isFaceUp: boolean): Card  {
-        const dealtCard =  this.cardsInDeck.pop()!
-
-        dealtCard.isFacingUp = isFaceUp
-        return dealtCard
-    }
-}
-
-class Hand {
-    cards: Card[];
-    handValue: number;
-
-    constructor(cards: Card[] = [], handValue: number = 0) {
-        this.cards = cards
-        this.handValue = handValue
-    }
-
-    addCard(card: Card): void {
-        this.cards.push(card)
-    }
-
-    calculateValue(): void {
-        this.handValue = 0
-        let amountOfAces = 0
-
-        for (const card of this.cards) {
-            this.handValue += card.value
-            if (card.id == 0) amountOfAces++
-        }
-
-        // aces are put in as 11 instead of 1 automatically, if we are over 21 we will subtract by 10, making the ace count as 1 and
-        // reduce the amount of 'aces' left
-        while (this.handValue > 21 && amountOfAces > 0) {
-            this.handValue -= 10
-            amountOfAces--
-        }
-    }
-}
-
-class Card {
-    value: number;
-    suit: string;
-    id: number
-    name?: string;
-    isFacingUp: boolean;
-
-    constructor(suit: string, id: number) {
-        this.suit = suit
-        this.isFacingUp = false
-        this.id = id
-
-        if (id == 0) {
-            this.value = 11
-            this.name = 'Ace'
-        } else if (id < 10) {
-            this.value = id + 1
-            this.name = 'Number'
-        } else {
-            this.value = 10
-            this.name = this.getName(id)
-        }
-    }
-
-    getName(id: number): string {
-        if (id == 11) return 'Jack'
-        else if (id == 12) return 'King'
-        else return 'Queen'
-    }
-}
-
-const suits = [
-    'Hearts',
-    'Spades',
-    'Diamonds',
-    'Clubs'
-]

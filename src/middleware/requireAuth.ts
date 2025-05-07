@@ -17,8 +17,8 @@ export const requireAuth =  async (req: Request, res: Response, next: NextFuncti
         return
     }
 
-    // Because at this point, the user is authenticated and logged in, we assign the user to the res object
-    // so that we do not need to do multiple look ups down the line ( next function )
+    //* Because at this point, the user is authenticated and logged in, we assign the user to the res object
+    //* so that we do not need to do multiple look ups down the line ( next function )
     res.locals.user = user
     next()
 }

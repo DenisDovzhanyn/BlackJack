@@ -6,7 +6,7 @@ import { hash, randomBytes } from "crypto";
 const userCol: mongoDb.Collection = getDb(process.env.DB_NAME!).collection('users')
 
 export const findByUsername = async (username: string): Promise<User | null> => {
-    // try to find a user based on username
+    //* try to find a user based on username
     const foundUser =  await userCol.findOne( {username: {'$regex': username, '$options': 'i'} } )
     if (!foundUser) return null
 

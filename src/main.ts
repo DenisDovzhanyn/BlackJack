@@ -5,7 +5,7 @@ import { connectToRedis } from './redis';
 
 
 (async () => {
-    // establish connection to our mongodb server
+    //* establish connection to our mongodb server
     await connectDb()
     await connectToRedis()
 
