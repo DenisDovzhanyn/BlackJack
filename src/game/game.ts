@@ -11,6 +11,7 @@ export interface BlackJackDocument {
     stand?: boolean,
     insurance?: boolean,
     insuranceBet?: number,
+    insuranceBetWon?: boolean,
     turnCount?: number
 }
 
@@ -32,6 +33,7 @@ export class BlackJackGame{
     stand: boolean
     insurance: boolean
     insuranceBet?: number
+    insuranceBetWon?: boolean
     turnCount: number
     
     constructor({ 
@@ -43,6 +45,7 @@ export class BlackJackGame{
         stand = false,
         insurance = false,
         insuranceBet = undefined,
+        insuranceBetWon = undefined,
         turnCount = 1    
     }: BlackJackDocument) {
         this.playerId = playerId
@@ -53,6 +56,7 @@ export class BlackJackGame{
         this.stand = stand
         this.insurance = insurance
         this.insuranceBet = insuranceBet
+        this.insuranceBetWon = insuranceBetWon
         this.turnCount = turnCount
     }
 

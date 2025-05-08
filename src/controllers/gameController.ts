@@ -55,6 +55,8 @@ export const hit = async (req: Request, res: Response) => {
             //* if the dealers hand is not equal to 21 at this point, then the dealer has busted so we pay out player
             if (game.dealerHand.handValue != 21) await updateBalanceAndTotalProfit(game.playerId, game.betAmount * 2)
         }
+        //* pay out any insurance bets in 21 or over case since the game is done at this point
+        if (game.insurance && game.insuranceBetWon) await updateBalanceAndTotalProfit(game.playerId, game.insuranceBet! * 2)
         //* face up cards here so player can see them at this point
         game.dealerHand.cards.forEach((card) => card.isFacingUp = true)
         await deleteGameState(game.playerId)
@@ -79,7 +81,7 @@ export const doubleDown = async (req: Request, res: Response) => {
 
     //* doubling down means betAmount * 2, so we can just check whether the user has enough
     //* to have the bet amount subtracted again
-    if (user.balance < game!.betAmount) {
+    if (user.balance < game.betAmount) {
         res.status(400).json({error: 'You do not have enough balance to double down'}).end()
         return
     }
@@ -96,8 +98,52 @@ export const doubleDown = async (req: Request, res: Response) => {
         }
         //* in the case the gets more or matches we do nothing because the money has been taken already
     }
+
+    //* pay out insurance at this point because doubling down == stand
+    if (game.insurance && game.insuranceBetWon) await updateBalanceAndTotalProfit(game.playerId, game.insuranceBet! * 2)
     
     game.dealerHand.cards.forEach((card) => card.isFacingUp = true)
     await deleteGameState(game.playerId)
     res.send(200).json(game.serialize()).end()
+}
+
+
+export const insurance = async (req: Request, res: Response) => {
+    const user: User = res.locals.user
+    const game = await getGameState(user._id!)
+    const {insuranceBetAmount} = req.body
+
+    if (!game) {
+        res.status(400).json({error: 'Existing game not found'}).end()
+        return
+    } else if (!insuranceBetAmount) {
+        res.status(400).json({error: 'Insurance bet amount not provided'}).end()
+        return
+    } else if (user.balance < insuranceBetAmount) {
+        res.status(400).json({error: 'You do not have enough balance to place this insurance bet'}).end()
+        return
+    } else if (insuranceBetAmount > game.betAmount / 2) {
+        res.status(400).json({error: 'You can only place an insurance bet up to half the amount of the original bet'}).end()
+        return    
+    } else if (game.turnCount > 1) {
+        res.status(400).json({error: 'You can only place an insurance bet on the first turn'}).end()
+        return
+    } else if (game.dealerHand.cards[0].id != 0) {
+        res.status(400).json({error: 'You can only place an insurance bet when the dealer has an ace'})
+        return
+    } else if (game.insurance) {
+        res.status(400).json({error: 'You have already placed an insurance bet this game'}).end()
+        return    
+    }
+
+    game.insurance = true
+    game.insuranceBet = insuranceBetAmount
+    await updateBalanceAndTotalProfit(game.playerId, -game.insuranceBet!)
+
+    game.dealerHand.calculateValue()
+    if (game.dealerHand.handValue == 21) game.insuranceBetWon = true
+
+    await setGameState(game)
+
+    res.status(200).json(game.serialize()).end()
 }
