@@ -4,6 +4,7 @@ import { Deck } from "./deck";
 
 export interface BlackJackDocument {
     playerId: ObjectId,
+    isGameOver?: boolean,
     playerHand?: Hand,
     dealerHand?: Hand,
     deck?: Deck,
@@ -16,6 +17,7 @@ export interface BlackJackDocument {
 }
 
 export interface BlackJackDTO {
+    isGameOver: boolean,
     playerHand: Hand,
     dealerHand: Hand,
     betAmount: number,
@@ -26,6 +28,7 @@ export interface BlackJackDTO {
 }
 export class BlackJackGame{
     playerId: ObjectId;
+    isGameOver: boolean;
     playerHand: Hand;
     dealerHand: Hand;
     deck: Deck;
@@ -38,6 +41,7 @@ export class BlackJackGame{
     
     constructor({ 
         playerId,
+        isGameOver = false,
         betAmount,
         playerHand,
         dealerHand,
@@ -49,6 +53,7 @@ export class BlackJackGame{
         turnCount = 1    
     }: BlackJackDocument) {
         this.playerId = playerId
+        this.isGameOver = isGameOver
         this.betAmount = betAmount
         this.playerHand = new Hand(playerHand?.cards, playerHand?.handValue)
         this.dealerHand = new Hand(dealerHand?.cards, dealerHand?.handValue)
@@ -97,6 +102,7 @@ export class BlackJackGame{
     
     serialize(): BlackJackDTO {
         const doc: BlackJackDTO = { 
+            isGameOver: this.isGameOver,
             playerHand: this.playerHand,
             dealerHand: this.dealerHand,
             betAmount: this.betAmount,

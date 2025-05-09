@@ -22,7 +22,7 @@ export const placeBet = async (req: Request, res: Response) => {
 
     await updateBalanceAndTotalProfit(user._id!, -betAmount)
 
-    const game: BlackJackGame = new BlackJackGame({playerId: user._id!, betAmount})
+    const game: BlackJackGame = new BlackJackGame({playerId: user._id!, betAmount: betAmount})
     game.beginGame()
 
     await setGameState(game)
@@ -59,9 +59,11 @@ export const hit = async (req: Request, res: Response) => {
         }
         //* pay out any insurance bets in 21 or over case since the game is done at this point
         if (game.insurance && game.insuranceBetWon) await updateBalanceAndTotalProfit(game.playerId, game.insuranceBet! * 2)
+
+        await deleteGameState(game.playerId)
         //* face up cards here so player can see them at this point
         game.dealerHand.cards.forEach((card) => card.isFacingUp = true)
-        await deleteGameState(game.playerId)
+        game.isGameOver = true
     } else {
         //TODO im pretty sure this can throw an error so like you know be careful
         await setGameState(game)
@@ -103,6 +105,8 @@ export const doubleDown = async (req: Request, res: Response) => {
     if (game.insurance && game.insuranceBetWon) await updateBalanceAndTotalProfit(game.playerId, game.insuranceBet! * 2)
     
     game.dealerHand.cards.forEach((card) => card.isFacingUp = true)
+    game.isGameOver = true
+
     await deleteGameState(game.playerId)
     res.send(200).json(game.serialize()).end()
 }
@@ -164,9 +168,9 @@ export const stand = async (req: Request, res: Response) => {
     
     if (game.insurance && game.insuranceBetWon) await updateBalanceAndTotalProfit(game.playerId, game.insuranceBet! * 2)
     
-    await deleteGameState(game.playerId)
-
     game.dealerHand.cards.forEach((card) => card.isFacingUp = true)
+    game.isGameOver = true
 
+    await deleteGameState(game.playerId)
     res.status(200).json(game.serialize()).end()
 }
