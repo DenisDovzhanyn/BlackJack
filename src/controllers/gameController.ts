@@ -27,6 +27,8 @@ export const placeBet = async (req: Request, res: Response) => {
 
     await setGameState(game)
 
+    //? maybe i should check to see if the player has a 21 initially ?
+    //? if they do there is no point in going foward i either pay them out at this point or not ( if the dealer also has 21 )
     /*
     * after setting the game state i need to send back a blackjackgameDTO, we do not want to show the user
     * the dealers second card, even though it wont be displayed on the front end, if i was to send a blackjackgame object
@@ -64,8 +66,6 @@ export const hit = async (req: Request, res: Response) => {
         //TODO im pretty sure this can throw an error so like you know be careful
         await setGameState(game)
     }
-    //TODO we also need to check does the player have exactly 21? if they do then the dealer
-    //TODO needs to act at this point.
 
     res.status(200).json(game.serialize()).end()
 }
@@ -144,6 +144,29 @@ export const insurance = async (req: Request, res: Response) => {
     if (game.dealerHand.handValue == 21) game.insuranceBetWon = true
 
     await setGameState(game)
+
+    res.status(200).json(game.serialize()).end()
+}
+
+
+export const stand = async (req: Request, res: Response) => {
+    const user: User = res.locals.user
+    const game = await getGameState(user._id!)
+
+    if (!game) {
+        res.status(400).json({error: 'Existing game not found'}).end()
+        return
+    }
+
+    dealerPlay(game)
+
+    if (game.dealerHand.handValue > 21 || game.dealerHand.handValue < game.playerHand.handValue) await updateBalanceAndTotalProfit(game.playerId, game.betAmount * 2) 
+    
+    if (game.insurance && game.insuranceBetWon) await updateBalanceAndTotalProfit(game.playerId, game.insuranceBet! * 2)
+    
+    await deleteGameState(game.playerId)
+
+    game.dealerHand.cards.forEach((card) => card.isFacingUp = true)
 
     res.status(200).json(game.serialize()).end()
 }
