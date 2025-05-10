@@ -113,16 +113,14 @@ export class BlackJackGame{
         }
         
         //* we do this so that the user can not cheat and check the dealers face down cards
-        //* but we still need a way to tell the client side how many cards the dealer has
-        //? do I really need to tell the client how many cards the dealer has? 
-        //? the dealer will always deal himself 2 cards after dealing to the player, with one being visible. then the dealer
-        //? will only hit again after the player stands, and at that point the user should be able to see dealer card
-        doc.dealerHand!.cards = doc.dealerHand!.cards.filter((card) => {
-            if (!card.isFacingUp) {
-                doc.dealerHand!.handValue -= card.value
-                return false
-            }
-            return true
+       
+        //* if the card facing up we return the card, otherwise we give a blank card!
+        //? I think subtracting card.value can cause problems with aces, we will see 
+        doc.dealerHand!.cards = doc.dealerHand!.cards.map((card) => {
+            if (card.isFacingUp) return card
+            
+            doc.dealerHand.handValue -= card.value
+            return new Card('blank', -1)
         })
 
         return doc

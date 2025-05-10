@@ -9,8 +9,10 @@ class Card {
         this.suit = suit
         this.isFacingUp = false
         this.id = id
-
-        if (id == 0) {
+        if (id == -1) {
+            this.value = 0
+            this.name = 'Blank'
+        } else if (id == 0) {
             this.value = 11
             this.name = 'Ace'
         } else if (id < 10) {
