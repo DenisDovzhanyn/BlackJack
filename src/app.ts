@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser'
 import authRoutes from './routes/authRoutes';
 import gameRoutes from './routes/gameRoutes';
 import { requireAuth } from './middleware/requireAuth';
+import { User } from './models/user';
 
     const app = express();
     /*
@@ -34,6 +35,13 @@ import { requireAuth } from './middleware/requireAuth';
     */
     app.use(requireAuth)
     
+    app.post('/user', (req: Request, res: Response) => {
+        const userDoc = res.locals.user
+        const user = new User(userDoc)
+
+        res.status(200).json(user.serialize()).end()
+    })
+
     app.use('/game', gameRoutes)
     
     /*

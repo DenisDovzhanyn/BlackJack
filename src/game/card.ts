@@ -1,4 +1,4 @@
-class Card {
+export class Card {
     value: number;
     suit: string;
     id: number

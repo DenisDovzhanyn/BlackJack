@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { Hand } from "./hand";
 import { Deck } from "./deck";
+import { Card } from "./card";
 
 export interface BlackJackDocument {
     playerId: ObjectId,
@@ -116,6 +117,11 @@ export class BlackJackGame{
        
         //* if the card facing up we return the card, otherwise we give a blank card!
         //? I think subtracting card.value can cause problems with aces, we will see 
+        //! ------------------------------------------------------------------
+        //? Actually, on second thought this will NOT cause problems with aces, because the only point in the game where the dealers
+        //? cards will be face down, is up until the point where the user stands or busts! SO because of this
+        //? the dealer will not have a chance to pull more than 2 cards for himself. meaning we cant have a case where an ace counts
+        //? as a 1 AND face down
         doc.dealerHand!.cards = doc.dealerHand!.cards.map((card) => {
             if (card.isFacingUp) return card
             
