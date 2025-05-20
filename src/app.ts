@@ -34,7 +34,10 @@ import { User } from './models/user';
     * then the user's validity will not be checked
     */
     app.use(requireAuth)
-    
+    //TODO right now, since i am requiring a user id ALONG with the session token in every request, i should store the user id as a cookie so the client doesnt need
+    //TODO to include it in every body of every request. Because of this the front end has to do a POST to get user info
+
+    //! ^ lol i remember why its not stored in cookie already. I didnt want to import a library for a single cookie
     app.post('/user', (req: Request, res: Response) => {
         const userDoc = res.locals.user
         const user = new User(userDoc)

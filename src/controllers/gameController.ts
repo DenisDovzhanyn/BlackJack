@@ -115,18 +115,18 @@ export const doubleDown = async (req: Request, res: Response) => {
 export const insurance = async (req: Request, res: Response) => {
     const user: User = res.locals.user
     const game = await getGameState(user._id!)
-    const {insuranceBetAmount} = req.body
+    const {betAmount} = req.body
 
     if (!game) {
         res.status(400).json({error: 'Existing game not found'}).end()
         return
-    } else if (!insuranceBetAmount) {
+    } else if (!betAmount) {
         res.status(400).json({error: 'Insurance bet amount not provided'}).end()
         return
-    } else if (user.balance < insuranceBetAmount) {
+    } else if (user.balance < betAmount) {
         res.status(400).json({error: 'You do not have enough balance to place this insurance bet'}).end()
         return
-    } else if (insuranceBetAmount > game.betAmount / 2) {
+    } else if (betAmount > game.betAmount / 2) {
         res.status(400).json({error: 'You can only place an insurance bet up to half the amount of the original bet'}).end()
         return    
     } else if (game.turnCount > 1) {
@@ -141,7 +141,7 @@ export const insurance = async (req: Request, res: Response) => {
     }
 
     game.insurance = true
-    game.insuranceBet = insuranceBetAmount
+    game.insuranceBet = betAmount
     await updateBalanceAndTotalProfit(game.playerId, -game.insuranceBet!)
 
     game.dealerHand.calculateValue()
