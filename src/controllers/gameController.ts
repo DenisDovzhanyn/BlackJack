@@ -26,7 +26,15 @@ export const placeBet = async (req: Request, res: Response) => {
     game.beginGame()
 
     await setGameState(game)
-
+    if (game.playerHand.handValue === 21) {
+        dealerPlay(game)
+        if (game.dealerHand.handValue != 21) await updateBalanceAndTotalProfit(game.playerId, game.betAmount * 2)
+        
+        game.dealerHand.cards.forEach((card) => card.isFacingUp = true)
+        game.isGameOver = true
+        
+        await deleteGameState(user._id!)
+    }
     //? maybe i should check to see if the player has a 21 initially ?
     //? if they do there is no point in going foward i either pay them out at this point or not ( if the dealer also has 21 )
     /*
@@ -34,7 +42,8 @@ export const placeBet = async (req: Request, res: Response) => {
     * the dealers second card, even though it wont be displayed on the front end, if i was to send a blackjackgame object
     * the user could just look into their network tab and see what the value of that flipped card is
     */
-     res.status(200).json(game.serialize()).end()
+    
+    res.status(200).json(game.serialize()).end()
 }
 
 
