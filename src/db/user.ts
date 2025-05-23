@@ -68,5 +68,6 @@ export const updateBalanceAndTotalProfit = async (_id: mongoDb.ObjectId, amountA
     ) 
 
     if (!updatedUser) return null
+
     return new User(updatedUser as UserDocument)
 }

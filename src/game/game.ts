@@ -53,7 +53,7 @@ export class BlackJackGame{
         insuranceBetWon = undefined,
         turnCount = 1    
     }: BlackJackDocument) {
-        this.playerId = playerId
+        this.playerId = new ObjectId(playerId.toString())
         this.isGameOver = isGameOver
         this.betAmount = betAmount
         this.playerHand = new Hand(playerHand?.cards, playerHand?.handValue)
