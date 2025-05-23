@@ -72,7 +72,7 @@ export const login = async (req: Request, res: Response) => {
         res.status(400).json({error: 'There was an error logging you in'}).end()
         return
     }
-
+    
     console.log(`${username} has logged in!`)
     res.status(200).cookie('sessionToken', cookie, {httpOnly: true}).json(user.serialize()).end()
 }

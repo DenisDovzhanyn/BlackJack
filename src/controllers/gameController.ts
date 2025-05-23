@@ -117,7 +117,7 @@ export const doubleDown = async (req: Request, res: Response) => {
     game.isGameOver = true
 
     await deleteGameState(game.playerId)
-    res.send(200).json(game.serialize()).end()
+    res.status(200).json(game.serialize()).end()
 }
 
 
