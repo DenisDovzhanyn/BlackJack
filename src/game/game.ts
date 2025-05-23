@@ -91,7 +91,7 @@ export class BlackJackGame{
     //! But besides that we dont really need to know if they've doubleddown, we only need the stand boolean
     double(): void {
         //* meaning we are on first turn
-        if (this.turnCount != 1) return
+        if (this.turnCount !== 1) return
         
         this.betAmount *= 2
         const card = this.deck.deal(true)
