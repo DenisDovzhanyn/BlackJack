@@ -174,7 +174,7 @@ export const stand = async (req: Request, res: Response) => {
     dealerPlay(game)
 
     if (game.dealerHand.handValue > 21 || game.dealerHand.handValue < game.playerHand.handValue) await updateBalanceAndTotalProfit(game.playerId, game.betAmount * 2) 
-    
+    else if (game.dealerHand.handValue === game.playerHand.handValue) await updateBalanceAndTotalProfit(game.playerId, game.betAmount)
     if (game.insurance && game.insuranceBetWon) await updateBalanceAndTotalProfit(game.playerId, game.insuranceBet! * 2)
     
     game.dealerHand.cards.forEach((card) => card.isFacingUp = true)
