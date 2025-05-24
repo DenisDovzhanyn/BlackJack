@@ -28,8 +28,8 @@ export const placeBet = async (req: Request, res: Response) => {
     await setGameState(game)
     if (game.playerHand.handValue === 21) {
         dealerPlay(game)
-        if (game.dealerHand.handValue != 21) await updateBalanceAndTotalProfit(game.playerId, game.betAmount * 2)
-        
+        if (game.dealerHand.handValue !== 21) await updateBalanceAndTotalProfit(game.playerId, game.betAmount * 2)
+        else if (game.dealerHand.handValue === 21) await updateBalanceAndTotalProfit(game.playerId, game.betAmount)
         game.dealerHand.cards.forEach((card) => card.isFacingUp = true)
         game.isGameOver = true
         
@@ -65,6 +65,7 @@ export const hit = async (req: Request, res: Response) => {
             dealerPlay(game)
             //* if the dealers hand is not equal to 21 at this point, then the dealer has busted so we pay out player
             if (game.dealerHand.handValue != 21) await updateBalanceAndTotalProfit(game.playerId, game.betAmount * 2)
+            else if (game.dealerHand.handValue == 21) await updateBalanceAndTotalProfit(game.playerId, game.betAmount)
         }
         //* pay out any insurance bets in 21 or over case since the game is done at this point
         if (game.insurance && game.insuranceBetWon) await updateBalanceAndTotalProfit(game.playerId, game.insuranceBet! * 2)
@@ -104,9 +105,8 @@ export const doubleDown = async (req: Request, res: Response) => {
     //* if player didnt bust we will let dealer try to beat/match
     if (game.playerHand.handValue <= 21) {
         dealerPlay(game)
-        if (game.dealerHand.handValue > 21 || game.dealerHand.handValue < game.playerHand.handValue) {
-            await updateBalanceAndTotalProfit(game.playerId, game.betAmount * 2) 
-        }
+        if (game.dealerHand.handValue > 21 || game.dealerHand.handValue < game.playerHand.handValue) await updateBalanceAndTotalProfit(game.playerId, game.betAmount * 2) 
+        else if (game.dealerHand.handValue == game.playerHand.handValue) await updateBalanceAndTotalProfit(game.playerId, game.betAmount)
         //* in the case the gets more or matches we do nothing because the money has been taken already
     }
 
