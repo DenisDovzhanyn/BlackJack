@@ -5,6 +5,7 @@ import authRoutes from './routes/authRoutes';
 import gameRoutes from './routes/gameRoutes';
 import { requireAuth } from './middleware/requireAuth';
 import { User } from './models/user';
+import { getTopTenEarners } from './db/user';
 
     const app = express();
     /*
@@ -43,6 +44,13 @@ import { User } from './models/user';
         const user = new User(userDoc)
 
         res.status(200).json(user.serialize()).end()
+    })
+
+    //* please work lol
+    app.post('/topprofits', async (req: Request, res: Response) => {
+        const users = await getTopTenEarners()
+        console.log(users)
+        res.status(200).json({users}).end()
     })
 
     app.use('/game', gameRoutes)

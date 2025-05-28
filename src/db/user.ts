@@ -71,3 +71,9 @@ export const updateBalanceAndTotalProfit = async (_id: mongoDb.ObjectId, amountA
 
     return new User(updatedUser as UserDocument)
 }
+
+export const getTopTenEarners = async () => {
+    const userCursor = userCol.find({}).project({_id: 0, username: 1, totalProfits: 1}).sort({totalProfits: -1}).limit(10)
+
+    return await userCursor.toArray()
+}
