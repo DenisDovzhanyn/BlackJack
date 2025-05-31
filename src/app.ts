@@ -49,7 +49,6 @@ import { getTopTenEarners } from './db/user';
     //* please work lol
     app.post('/topprofits', async (req: Request, res: Response) => {
         const users = await getTopTenEarners()
-        console.log(users)
         res.status(200).json({users}).end()
     })
 
