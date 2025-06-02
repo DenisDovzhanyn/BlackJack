@@ -18,6 +18,9 @@ export const placeBet = async (req: Request, res: Response) => {
     if (betAmount > user.balance) {
         res.status(400).json({error: 'Your balance is too low to place this bet'}).end()
         return
+    } else if (betAmount <= 0 ) {
+        res.status(400).json({error: 'You cannot bet an amount this low'}).end()
+        return
     }
 
     await updateBalanceAndTotalProfit(user._id!, -betAmount)
